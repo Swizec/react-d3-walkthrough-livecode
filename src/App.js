@@ -64,7 +64,7 @@ class App extends Component {
                         y={0}
                         width={500}
                         height={500}
-                        zoom={1}
+                        zoom={null}
                     />
                 </svg>
             </div>
