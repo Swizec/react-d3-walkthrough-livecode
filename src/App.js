@@ -64,7 +64,8 @@ class App extends Component {
 
         return (
             <div className="App container">
-                <Title data={fitleredSalaries} filteredBy={filteredBy} />
+                <Title data={filteredSalaries} filteredBy={filteredBy} />
+
                 <svg width="1100" height="500">
                     <CountyMap
                         usTopoJson={usTopoJson}
