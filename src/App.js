@@ -9,12 +9,18 @@ import { loadAllData } from "./DataHandling";
 
 import CountyMap from "./components/CountyMap";
 import Histogram from "./components/Histogram";
+import { Title } from "./components/Meta";
 
 class App extends Component {
     state = {
         techSalaries: [],
         medianIncomes: [],
-        countyNames: []
+        countyNames: [],
+        filteredBy: {
+            USstate: "*",
+            year: "*",
+            jobTitle: "*"
+        }
     };
 
     componentDidMount() {
@@ -42,7 +48,8 @@ class App extends Component {
             techSalaries,
             countyNames,
             usTopoJson,
-            USstateNames
+            USstateNames,
+            filteredBy
         } = this.state;
 
         if (techSalaries.length < 1) {
@@ -57,7 +64,7 @@ class App extends Component {
 
         return (
             <div className="App container">
-                <h1>Loaded {techSalaries.length} salaries</h1>
+                <Title data={fitleredSalaries} filteredBy={filteredBy} />
                 <svg width="1100" height="500">
                     <CountyMap
                         usTopoJson={usTopoJson}
