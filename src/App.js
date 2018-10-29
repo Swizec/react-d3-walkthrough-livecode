@@ -12,11 +12,14 @@ import Histogram from "./components/Histogram";
 import { Title, Description } from "./components/Meta";
 import MedianLine from "./components/MedianLine";
 
+import Controls from "./components/Controls";
+
 class App extends Component {
     state = {
         techSalaries: [],
         medianIncomes: [],
         countyNames: [],
+        salariesFilter: () => true,
         filteredBy: {
             USstate: "*",
             year: "*",
@@ -44,6 +47,13 @@ class App extends Component {
         };
     }
 
+    updateDataFilter = (filter, filteredBy) => {
+        this.setState({
+            salariesFilter: filter,
+            filteredBy: filteredBy
+        });
+    };
+
     render() {
         const {
             techSalaries,
@@ -57,7 +67,7 @@ class App extends Component {
             return <Preloader />;
         }
 
-        const filteredSalaries = techSalaries,
+        const filteredSalaries = techSalaries.filter(this.state.salariesFilter),
             filteredSalariesMap = _.groupBy(filteredSalaries, "countyID"),
             countyValues = countyNames
                 .map(county => this.countyValue(county, filteredSalariesMap))
@@ -66,6 +76,14 @@ class App extends Component {
         let zoom = null,
             medianHousehold = this.state.medianIncomesByUSState["US"][0]
                 .medianIncome;
+
+        if (filteredBy.USstate !== "*") {
+            zoom = this.state.filteredBy.USstate;
+            medianHousehold = d3.mean(
+                this.state.medianIncomesByUSState[zoom],
+                d => d.medianIncome
+            );
+        }
 
         return (
             <div className="App container">
@@ -87,6 +105,15 @@ class App extends Component {
                         height={500}
                         zoom={zoom}
                     />
+
+                    <rect
+                        x="500"
+                        y="0"
+                        width="600"
+                        height="500"
+                        style={{ fill: "white" }}
+                    />
+
                     <Histogram
                         bins={10}
                         width={500}
@@ -109,6 +136,10 @@ class App extends Component {
                         value={d => d.base_salary}
                     />
                 </svg>
+                <Controls
+                    data={techSalaries}
+                    updateDataFilter={this.updateDataFilter}
+                />
             </div>
         );
     }
