@@ -1,70 +1,97 @@
-import React from "react";
+import React, { useMemo } from "react";
 import * as d3 from "d3";
 
 import HistogramBar from "./HistogramBar";
 import Axis from "./Axis";
 
-class Histogram extends React.Component {
-    state = {
-        histogram: d3.histogram(),
-        widthScale: d3.scaleLinear(),
-        yScale: d3.scaleLinear()
+function makeBar({ bar, yScale, widthScale, N, axisMargin }) {
+    let percent = (bar.length / N) * 100;
+
+    let props = {
+        percent,
+        x: axisMargin,
+        y: yScale(bar.x1),
+        width: widthScale(bar.length),
+        height: yScale(bar.x0) - yScale(bar.x1),
+        key: `histogram-bar-${bar.x0}`
     };
 
-    static getDerivedStateFromProps(props, state) {
-        let { histogram, widthScale, yScale } = state;
+    return <HistogramBar {...props} />;
+}
 
-        histogram.thresholds(props.bins).value(props.value);
+function useD3Stuff({
+    bins,
+    value,
+    data,
+    width,
+    axisMargin,
+    height,
+    y,
+    bottomMargin
+}) {
+    const bars = useMemo(
+        () =>
+            d3
+                .histogram()
+                .thresholds(bins)
+                .value(value)(data),
+        [bins, value, data]
+    );
 
-        const bars = histogram(props.data),
-            counts = bars.map(d => d.length);
-
-        widthScale
+    const widthScale = useMemo(() => {
+        const counts = bars.map(d => d.length);
+        return d3
+            .scaleLinear()
             .domain([d3.min(counts), d3.max(counts)])
-            .range([0, props.width - props.axisMargin]);
+            .range([0, width - axisMargin]);
+    }, [width, axisMargin, bars]);
 
-        yScale
-            .domain([0, d3.max(bars, d => d.x1)])
-            .range([props.height - props.y - props.bottomMargin, 0]);
+    const yScale = useMemo(
+        () =>
+            d3
+                .scaleLinear()
+                .domain([0, d3.max(bars, d => d.x1)])
+                .range([height - y - bottomMargin, 0]),
+        [height, y, bottomMargin, bars]
+    );
 
-        return {
-            ...state,
-            histogram,
-            widthScale,
-            yScale
-        };
-    }
+    return { bars, widthScale, yScale };
+}
 
-    makeBar = (bar, N) => {
-        const { yScale, widthScale } = this.state;
+function Histogram({
+    x,
+    y,
+    width,
+    height,
+    data,
+    axisMargin,
+    bottomMargin,
+    bins,
+    value
+}) {
+    const { bars, widthScale, yScale } = useD3Stuff({
+        bins,
+        value,
+        data,
+        width,
+        axisMargin,
+        height,
+        y,
+        bottomMargin
+    });
 
-        let percent = (bar.length / this.props.data.length) * 100;
+    const N = data.length;
 
-        let props = {
-            percent,
-            x: this.props.axisMargin,
-            y: yScale(bar.x1),
-            width: widthScale(bar.length),
-            height: yScale(bar.x0) - yScale(bar.x1),
-            key: `histogram-bar-${bar.x0}`
-        };
-
-        return <HistogramBar {...props} />;
-    };
-
-    render() {
-        const { histogram, yScale } = this.state,
-            { x, y, data, axisMargin } = this.props;
-
-        const bars = histogram(data);
-
-        return (
-            <g className="histogram" transform={`translate(${x}, ${y})`}>
-                <g className="bars">{bars.map(this.makeBar)}</g>
-                <Axis x={axisMargin - 3} y={0} data={bars} scale={yScale} />
+    return (
+        <g className="histogram" transform={`translate(${x}, ${y})`}>
+            <g className="bars">
+                {bars.map(bar =>
+                    makeBar({ bar, yScale, widthScale, N, axisMargin })
+                )}
             </g>
-        );
-    }
+            <Axis x={axisMargin - 3} y={0} data={bars} scale={yScale} />
+        </g>
+    );
 }
 
 export default Histogram;
