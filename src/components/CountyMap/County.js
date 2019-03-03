@@ -14,29 +14,15 @@ const ChoroplethColors = _.reverse([
 ]);
 const BlankColor = "rgb(240,240,240)";
 
-class County extends Component {
-    shouldComponentUpdate(nextProps, nextState) {
-        const { zoom, value } = this.props;
+function County({ value, geoPath, feature, quantize }) {
+    let color = BlankColor;
 
-        return zoom !== nextProps.zoom || value !== nextProps.value;
+    if (value) {
+        color = ChoroplethColors[quantize(value)];
     }
 
-    render() {
-        const { value, geoPath, feature, quantize } = this.props;
-
-        let color = BlankColor;
-
-        if (value) {
-            color = ChoroplethColors[quantize(value)];
-        }
-
-        return (
-            <path
-                d={geoPath(feature)}
-                style={{ fill: color }}
-                title={feature.id}
-            />
-        );
-    }
+    return (
+        <path d={geoPath(feature)} style={{ fill: color }} title={feature.id} />
+    );
 }
 export default County;
